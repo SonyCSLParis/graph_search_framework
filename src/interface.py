@@ -75,8 +75,10 @@ class Interface:
         """ Filters nodes that start with a regexed value """
 
         def filter_f(x_val):
-            return x_val.startswith(self.dataset_config["start_uri"]) or \
-                not any(x_val.startswith(elt) for elt in ["http", '"'])
+            if "start_uri" in self.dataset_config:
+                return x_val.startswith(self.dataset_config["start_uri"]) or \
+                    not any(x_val.startswith(elt) for elt in ["http", '"'])
+            return True
 
         triples = [elt for elt in triples if filter_f(elt[2])]
         triples = [elt for elt in triples if filter_f(elt[0])]

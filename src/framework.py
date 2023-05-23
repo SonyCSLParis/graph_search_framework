@@ -310,7 +310,8 @@ class GraphSearchFramework:
 
         if "dataset_type" not in config:
             raise ValueError(self.config_error_messages['dataset_type'])
-        if config["dataset_type"] not in ["wikidata", "dbpedia", "yago"]:
+        possible_dataset_type = [x.replace(".yaml", "") for x in os.listdir(os.path.join(FOLDER_PATH, "dataset-config"))]
+        if config["dataset_type"] not in possible_dataset_type:
             raise TypeError(self.config_error_messages['dataset_type'])
 
         if config["type_interface"] == "hdt":
@@ -733,9 +734,15 @@ class GraphSearchFramework:
 
             if self.keep_only_last and i > 1:
                 if self.rdf_type:
-                    os.remove(f"{self.save_folder}/{i-1}-subgraph.csv")
-                os.remove(f"{self.save_folder}/{i-1}-pending_nodes_ingoing.csv")
-                os.remove(f"{self.save_folder}/{i-1}-pending_nodes_outgoing.csv")
+                    try:
+                        os.remove(f"{self.save_folder}/{i-1}-subgraph.csv")
+                    except OSError:
+                        pass
+                try:
+                    os.remove(f"{self.save_folder}/{i-1}-pending_nodes_ingoing.csv")
+                    os.remove(f"{self.save_folder}/{i-1}-pending_nodes_outgoing.csv")
+                except OSError:
+                        pass
 
             if self.rdf_type:
                 self.subgraph.to_csv(f"{self.save_folder}/{i}-subgraph.csv")
@@ -748,7 +755,10 @@ class GraphSearchFramework:
             if self.walk == "informed":
                 # if walk is random, no occurences used for best path choosing
                 if self.keep_only_last and i > 1:
-                    os.remove(f"{self.save_folder}/{i-1}-occurences.json")
+                    try:
+                        os.remove(f"{self.save_folder}/{i-1}-occurences.json")
+                    except OSError:
+                        pass
 
                 with open(f"{self.save_folder}/{i}-occurences.json", "w", encoding='utf-8') \
                         as openfile:
@@ -757,7 +767,10 @@ class GraphSearchFramework:
             if self.mode in ["simple_search", "search_specific_node"]:
                 found_node = self._update_path(output=output, end_node=end_node)
                 if self.keep_only_last and i > 1:
-                    os.remove(f"{self.save_folder}/{i}-paths.json")
+                    try:
+                        os.remove(f"{self.save_folder}/{i}-paths.json")
+                    except OSError:
+                        pass
 
                 with open(f"{self.save_folder}/{i}-paths.json", "w", encoding='utf-8') \
                         as openfile:

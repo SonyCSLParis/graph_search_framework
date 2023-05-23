@@ -69,7 +69,7 @@ We occasionnaly worked with Triply DB's data:
 
 We include some sample data in the `sample-data` folder. 
 
-Before running the search, you need to extrac domain, range and superclasses information from the dataset you downloaded. See file `src/extract_domain_range.py` for further information and command lines to run that file, depending on your dataset.
+Before running the search, you need to extract domain, range and superclasses information from the dataset you downloaded. See file `src/extract_domain_range.py` for further information and command lines to run that file, depending on your dataset.
 
 You can run one search using this sample data **from the root directory**, by running:
 ```bash
@@ -171,7 +171,14 @@ Scripts for reproducibility (on the 12 pre-experiments and the main experiments)
 
 ---
 
-## 7. Other
+## 7. Run the search on your own dataset
+
+* Create a `<dataset-name>.yaml` file in the `dataset-config` folder. You can adapt one of the existing ones in this repo.
+* You need to extract domain, range and superclasses information from the dataset you downloaded. See file `src/extract_domain_range.py` for further information and command lines to run that file, depending on your dataset. If you do not want to use such information, you can add empty json files in the `domain-range-pred` folders: `<dataset-name>-domain.json`, `<dataset-name>-range.json` and `<dataset-name>-superclasses.json`.
+
+---
+
+## 8. Other
 
 If you want __pycache__ content or other removed, you can run:
 ```

@@ -42,7 +42,7 @@ class ExtractDomainRange:
 
     def _check_args(self):
         """ Check arguments when instantiating """
-        if self.dataset_type not in ["dbpedia", "wikidata", "yago"]:
+        if self.dataset_type not in ["dbpedia", "wikidata", "yago", "faro_sem_news"]:
             raise ValueError("`dataset_type` should be either `dbpedia`, `wikidata` or `yago`")
 
         if self.nested not in [0, 1]:
@@ -146,7 +146,7 @@ class ExtractDomainRange:
 
     def __call__(self):
         """ Pre extracting info on constraints for predicates """
-        if self.dataset_type in ["dbpedia", "yago"]:
+        if self.dataset_type in ["dbpedia", "yago", "faro_sem_news"]:
             domain_pred = self.get_pred(type_to_extract="domain")
             range_pred = self.get_pred(type_to_extract="range")
 
@@ -193,7 +193,7 @@ if __name__ == '__main__':
                                    dataset_path=args_main["dataset_path"])
     DOMAIN_PRED, RANGE_PRED, SUPERCLASSES = extractor()
 
-    SAVE_FOLDER = os.path.join(FOLDER_PATH)
+    SAVE_FOLDER = os.path.join(FOLDER_PATH, "domain-range-pred")
     if not os.path.exists(SAVE_FOLDER):
         os.makedirs(SAVE_FOLDER)
 
