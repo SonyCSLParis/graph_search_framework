@@ -113,14 +113,12 @@ class TriplInterface:
                                 -> list[(str, str, str)]:
         temp_res = []
 
-        print("ingoing")
         for i in tqdm(range(len(ingoing))):
             subject = ingoing[i][0]
             temp_res += self.run_request(params=dict(subject=str(subject)),
                                                filter_pred=self.pred,
                                                filter_keep=True)
 
-        print('outgoing')
         for i in tqdm(range(len(outgoing))):
             object_t = outgoing[i][2]
             temp_res += self.run_request(params=dict(subject=str(object_t)),

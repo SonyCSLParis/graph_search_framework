@@ -32,6 +32,8 @@ pip uninstall grpcio
 conda install grpcio
 ```
 
+If it doesn't work, you can install the packages directly in your virtual environment. For `hdt`, make sure you have installed the pre-requisites before, that you can find [here](https://github.com/Callidon/pyHDT).
+
 Create a `private.py` file in the settings folder and add the followings:
 * AGENT (of computer, for sparql interface) [optional]
 * TOKEN (for Triply) [optional]

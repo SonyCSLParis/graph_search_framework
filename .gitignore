@@ -35,3 +35,4 @@ app/data/*
 !app/data/.gitkeep
 domain-range-pred/
 !domain-range-pred/.gitkeep
+other-datasets/*

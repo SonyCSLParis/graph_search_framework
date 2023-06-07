@@ -19,6 +19,7 @@ from settings import FOLDER_PATH
 from src.ranker import Ranker
 from src.metrics import Metrics
 from src.ordering import Ordering
+from src.reasoner import Reasoner
 from src.expansion import NodeExpansion
 from src.selecting_node import NodeSelection
 from src.hdt_interface import HDTInterface
@@ -36,7 +37,8 @@ class GraphSearchFramework:
                  mode: str = "search_type_node_metrics",
                  node_selection: str = "all",
                  walk: str = "informed",
-                 keep_only_last: bool = True):
+                 keep_only_last: bool = True,
+                 reasoning: bool = False):
         """
         - `config`: config for the search,
         examples in `configs-example` folder
@@ -219,8 +221,13 @@ class GraphSearchFramework:
             self.predicate_filter += [self.dataset_config["rdf_type"]]
 
 
+        if reasoning:
+            self.reasoner = Reasoner()
+        else:
+            self.reasoner = None
         self.node_expander = NodeExpansion(rdf_type=self.rdf_type,
                                            interface=self.interface,
+                                           reasoner=self.reasoner,
                                            args_filtering=self.get_config_filtering(
                                             config=config, dataset_config=self.dataset_config))
 
@@ -435,18 +442,36 @@ class GraphSearchFramework:
             if (";" in self.to_expand) and ("ingoing" in self.to_expand):
                 splitted = self.to_expand.replace('ingoing-', '').split(";")
                 pred, obj = splitted[0], ";".join(splitted[1:])
+
+                if self.reasoner:
+                    obj_same_as = self.reasoner.cached.get(
+                        obj, self.reasoner.get_same_as_nodes(self.interface, obj))
+                    obj_same_as += [obj]
+                else:
+                    obj_same_as = [obj]
+
                 nodes = list(
                     self.pending_nodes_ingoing[
                         (self.pending_nodes_ingoing.predicate.isin([pred, str(pred)])) & \
-                        (self.pending_nodes_ingoing.object.isin([obj, str(obj)]))].subject.values)
+                        (self.pending_nodes_ingoing.object.isin(obj_same_as + [str(x) for x in obj_same_as]))].subject.values)
             elif (";" in self.to_expand) and ("outgoing" in self.to_expand):
                 subj, pred = self.to_expand.replace('outgoing-', '').split(";")
+
+                if self.reasoner:
+                    subj_same_as = self.reasoner.cached.get(
+                        subj, self.reasoner.get_same_as_nodes(self.interface, subj))
+                    subj_same_as += [subj]
+                else:
+                    subj_same_as = [subj]
+
                 nodes = list(
                     self.pending_nodes_outgoing[
-                        (self.pending_nodes_outgoing.predicate.isin([pred, str(pred)])) & \
+                        (self.pending_nodes_outgoing.predicate.isin(subj_same_as + [str(x) for x in subj_same_as])) & \
                         (self.pending_nodes_outgoing.subject \
                             .isin([subj, str(subj)]))].object.values)
             else:
+                # no need to add owl:sameas consideration, since it means
+                # the metric is object-independant
                 # print(self.pending_nodes_ingoing.predicate.unique())
                 nodes = list(self.pending_nodes_ingoing[\
                     self.pending_nodes_ingoing.predicate.isin(
@@ -516,7 +541,8 @@ class GraphSearchFramework:
 
     def _expand_one_node(self, args: dict) \
         -> (DataFrame, DataFrame, DataFrame, DataFrame, list[str]):
-        return self.node_expander(args=args, dates=self.dates)
+        res, self.reasoner = self.node_expander(args=args, dates=self.dates)
+        return res
 
     def _update_nodes_expanded(self, iteration:int, nodes: list[str]) -> DataFrame:
 
@@ -569,6 +595,16 @@ class GraphSearchFramework:
             return "2"
         return "3"
 
+    def helper_ent_ref(self, node):
+        """ Retrieving referent of entity """
+        if self.reasoner:
+            if node not in self.reasoner.referents:
+                self.reasoner.get_same_as_nodes(
+                    interface=self.interface, node=node)
+            return self.reasoner.referents[node]
+            
+        return node
+
     def _update_occurence(self, ingoing: DataFrame,
                           outgoing: DataFrame, occurence: dict) -> dict:
         """
@@ -591,10 +627,10 @@ class GraphSearchFramework:
                                  "inverse_pred_object_freq"]:  # subject predicate
             for _, row in ingoing.iterrows():
                 nb_order = self._get_nb(superclass=row.superclass, pred=row.predicate)
-                occurence[f"{nb_order}-ingoing-{str(row.predicate)};{str(row.object)}"] += 1
+                occurence[f"{nb_order}-ingoing-{str(row.predicate)};{self.helper_ent_ref(str(row.object))}"] += 1
             for _, row in outgoing.iterrows():
                 nb_order = self._get_nb(superclass=row.superclass, pred=row.predicate)
-                occurence[f"{nb_order}-outgoing-{str(row.subject)};{str(row.predicate)}"] += 1
+                occurence[f"{nb_order}-outgoing-{self.helper_ent_ref(str(row.subject))};{str(row.predicate)}"] += 1
         return occurence
 
     def update_occurrence_after_expansion(self, occurence: dict, to_expand: str) -> dict:
@@ -742,7 +778,7 @@ class GraphSearchFramework:
                     os.remove(f"{self.save_folder}/{i-1}-pending_nodes_ingoing.csv")
                     os.remove(f"{self.save_folder}/{i-1}-pending_nodes_outgoing.csv")
                 except OSError:
-                        pass
+                    pass
 
             if self.rdf_type:
                 self.subgraph.to_csv(f"{self.save_folder}/{i}-subgraph.csv")

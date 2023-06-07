@@ -11,6 +11,7 @@ from pandas.core.frame import DataFrame
 from settings import FOLDER_PATH
 from src.filtering import Filtering
 from src.hdt_interface import HDTInterface
+from src.reasoner import Reasoner
 
 class NodeExpansion:
     """
@@ -21,7 +22,7 @@ class NodeExpansion:
     """
 
     def __init__(self, rdf_type: list[tuple], args_filtering: dict,
-                 interface):
+                 interface, reasoner=None):
         """
         - `rdf_type`: list of tuples (<type_uri>, <URI>),
         e.g. ["event", "http://dbpedia.org/ontology/Event"]
@@ -44,6 +45,7 @@ class NodeExpansion:
         --> TriplInterface and SPARQLInterface obsolete
         """
         self.interface = interface
+        self.reasoner = reasoner
         self.rdf_type = rdf_type
         self._check_args()
 
@@ -111,6 +113,10 @@ class NodeExpansion:
             to_keep = list(type_date_df[(~type_date_df.subject.isin(to_discard)) & \
                 (type_date_df.object.isin(filtered))].subject.unique())
 
+        if self.reasoner:
+            to_discard = self.reasoner.update_nodes(self.interface, to_discard)
+            to_keep = self.reasoner.update_nodes(self.interface, to_keep)
+
         return triple_ingoing[triple_ingoing.subject.isin(to_keep)], \
             triple_ingoing[~triple_ingoing.subject.isin(to_discard)], \
             triple_outgoing[triple_outgoing.object.isin(to_keep)], \
@@ -125,13 +131,16 @@ class NodeExpansion:
             node=args["node"], predicate=args["predicate"])
 
         # Filter subgraph to keep
-        return self._filter_sub_graph(type_date_df=types_date, triple_ingoing=ingoing,
+        filtered = self._filter_sub_graph(type_date_df=types_date, triple_ingoing=ingoing,
                                       triple_outgoing=outgoing, dates=dates)
+
+        return filtered, self.reasoner
 
 
 if __name__ == '__main__':
     import yaml
     interface_main = HDTInterface()
+    reasoner_main = Reasoner()
 
     NODE = "http://dbpedia.org/resource/Antoine_Morlot"
     PREDICATE = ["http://dbpedia.org/ontology/wikiPageWikiLink",
@@ -165,7 +174,7 @@ if __name__ == '__main__':
         "dataset_type": DATASET_CONFIG["config_type"],
     }
 
-    node_expander = NodeExpansion(interface=interface_main,
+    node_expander = NodeExpansion(interface=interface_main, reasoner=reasoner_main,
                                   rdf_type=RDF_TYPE, args_filtering=ARGS_FILTERING)
     subgraph_ingoing_test, path_ingoing_test, subgraph_outgoing_test, \
         path_outgoing_test, to_discard_test = \
