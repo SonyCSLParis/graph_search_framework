@@ -25,8 +25,9 @@ class Reasoner:
 
     def update_cached(self, nodes):
         """ Update cached sameAs nodes """
+        nodes = list(set(nodes))
         for node in nodes:
-            self.cached[node] = [n for n in nodes if n != node]
+            self.cached[node] = nodes
 
     def update_referents(self, ref, nodes):
         """ One referent node for the set of nodes """
@@ -44,7 +45,7 @@ class Reasoner:
             curr_node = pending.pop()
             same_nodes = self.cached.get(curr_node,
                                          self.get_same_as_nodes(interface, curr_node))
-            updated_nodes += same_nodes
-            pending = [x for x in pending if x not in same_nodes]
+            updated_nodes.extend(same_nodes)
+            pending = [x for x in pending if x not in updated_nodes]
 
-        return updated_nodes
+        return list(set(updated_nodes))

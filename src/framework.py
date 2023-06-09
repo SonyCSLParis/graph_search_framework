@@ -446,7 +446,6 @@ class GraphSearchFramework:
                 if self.reasoner:
                     obj_same_as = self.reasoner.cached.get(
                         obj, self.reasoner.get_same_as_nodes(self.interface, obj))
-                    obj_same_as += [obj]
                 else:
                     obj_same_as = [obj]
 
@@ -460,7 +459,6 @@ class GraphSearchFramework:
                 if self.reasoner:
                     subj_same_as = self.reasoner.cached.get(
                         subj, self.reasoner.get_same_as_nodes(self.interface, subj))
-                    subj_same_as += [subj]
                 else:
                     subj_same_as = [subj]
 
