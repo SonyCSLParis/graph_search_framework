@@ -122,6 +122,13 @@ class NodeExpansion:
             triple_outgoing[triple_outgoing.object.isin(to_keep)], \
             triple_outgoing[~triple_outgoing.object.isin(to_discard)], \
             to_discard
+    
+    def _remove_expanded_nodes(self, ingoing, outgoing, types_date, nodes):
+        """ Removing nodes that were already visited """
+        ingoing = ingoing[~ingoing.subject.isin(nodes)]
+        outgoing = outgoing[~outgoing.object.isin(nodes)]
+        types_date = types_date[~types_date.object.isin(nodes)]
+        return ingoing, outgoing, types_date
 
     def __call__(self, args: dict, dates: list[str, str]) \
         -> (DataFrame, DataFrame, DataFrame, DataFrame, list[str]):
@@ -129,6 +136,12 @@ class NodeExpansion:
         # Querying knowledge base
         ingoing, outgoing, types_date = self._get_output_triples(
             node=args["node"], predicate=args["predicate"])
+
+        # Removing nodes that were already visited
+        ingoing, outgoing, types_date = self._remove_expanded_nodes(
+            ingoing=ingoing, outgoing=outgoing, types_date=types_date,
+            nodes=args["visited_nodes"] if "visited_nodes" in args.keys() else []
+        )
 
         # Filter subgraph to keep
         filtered = self._filter_sub_graph(type_date_df=types_date, triple_ingoing=ingoing,

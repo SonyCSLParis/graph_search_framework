@@ -464,9 +464,9 @@ class GraphSearchFramework:
 
                 nodes = list(
                     self.pending_nodes_outgoing[
-                        (self.pending_nodes_outgoing.predicate.isin(subj_same_as + [str(x) for x in subj_same_as])) & \
-                        (self.pending_nodes_outgoing.subject \
-                            .isin([subj, str(subj)]))].object.values)
+                        (self.pending_nodes_outgoing.subject.isin(subj_same_as + [str(x) for x in subj_same_as])) & \
+                        (self.pending_nodes_outgoing.predicate \
+                            .isin([pred, str(pred)]))].object.values)
             else:
                 # no need to add owl:sameas consideration, since it means
                 # the metric is object-independant
@@ -478,8 +478,8 @@ class GraphSearchFramework:
                     self.pending_nodes_outgoing.predicate.isin(
                         [self.to_expand])].object.values)
                 # print(nodes)
-
-            nodes = list(set([node for node in nodes if node not in self.nodes_expanded]))
+            print(nodes)
+            nodes = list(set(node for node in nodes if node not in self.nodes_expanded))
 
             # Sampling nodes if too many compared to max uri
             if len(nodes) > self.max_uri - len(self.nodes_expanded):
@@ -563,7 +563,8 @@ class GraphSearchFramework:
                                     "node": node,
                                     "path": path,
                                     "predicate": self.predicate_filter,
-                                    "iteration": iteration
+                                    "iteration": iteration,
+                                    "visited_nodes": list(set(self.nodes_expanded + nodes_to_expand))
                                     } for node in nodes_to_expand])
             pool.close()
             pool.join()
@@ -574,6 +575,7 @@ class GraphSearchFramework:
                                     "path": path,
                                     "predicate": self.predicate_filter,
                                     "iteration": iteration,
+                                    "visited_nodes": list(set(self.nodes_expanded + nodes_to_expand))
                                     } for node in nodes_to_expand]):
                 print(f"Processing node {i+1}/{len(nodes_to_expand)}\t{nodes_to_expand[i]}")
                 self.nodes_expanded.append(args["node"])
@@ -759,7 +761,7 @@ class GraphSearchFramework:
 
         for i in range(1, self.iterations+1):
             self.last_iteration = i
-            print(i, self.iterations)
+            print(i, "/", self.iterations)
             print(f"Iteration {i} started at {datetime.now()}")
             output, nodes_to_expand, path = self.run_one_iteration(iteration=i)
             self.info = self.merge_outputs(output=output, iteration=i, info=self.info)
