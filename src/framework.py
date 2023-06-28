@@ -435,7 +435,7 @@ class GraphSearchFramework:
         if self.walk == "informed":  # choosing nodes based on best path for next iteration
             for elt in ["1-", '2-', "3-"]:
                 if self.to_expand.startswith(elt):
-                    self.to_expand = self.to_expand.replace(elt, "")
+                    self.to_expand = self.to_expand[len(elt):]
             path = [self.to_expand]
 
             # Gettings args for next iteration
@@ -477,8 +477,6 @@ class GraphSearchFramework:
                         list(self.pending_nodes_outgoing[\
                     self.pending_nodes_outgoing.predicate.isin(
                         [self.to_expand])].object.values)
-                # print(nodes)
-            print(nodes)
             nodes = list(set(node for node in nodes if node not in self.nodes_expanded))
 
             # Sampling nodes if too many compared to max uri
@@ -920,6 +918,8 @@ if __name__ == '__main__':
                     help="node to look for in search (only if mode == 'search_specific_node'")
     ap.add_argument("-w", "--walk", default="informed",
                     help="type of walk in the graph: `random` or `informed`")
+    ap.add_argument("-k", "--keep", default='1',
+                    help="keep_only_last option")
     args_main = vars(ap.parse_args())
 
     with open(args_main["json"], "r", encoding="utf-8") as openfile_main:
@@ -929,7 +929,8 @@ if __name__ == '__main__':
 
     framework = GraphSearchFramework(config=config_loaded, mode=args_main["mode"],
                                      node_selection=args_main["node_selection"],
-                                     walk=args_main["walk"])
+                                     walk=args_main["walk"],
+                                     keep_only_last=True if args_main["keep"] == '1' else False)
     START = datetime.now()
     print(f"Process started at {START}")
     framework(end_node=args_main["end_node"])
