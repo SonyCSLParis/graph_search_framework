@@ -920,6 +920,8 @@ if __name__ == '__main__':
                     help="type of walk in the graph: `random` or `informed`")
     ap.add_argument("-k", "--keep", default='1',
                     help="keep_only_last option")
+    ap.add_argument("-r", "--reasoning", default='0',
+                    help="add reasoning layer or not")
     args_main = vars(ap.parse_args())
 
     with open(args_main["json"], "r", encoding="utf-8") as openfile_main:
@@ -930,7 +932,8 @@ if __name__ == '__main__':
     framework = GraphSearchFramework(config=config_loaded, mode=args_main["mode"],
                                      node_selection=args_main["node_selection"],
                                      walk=args_main["walk"],
-                                     keep_only_last=True if args_main["keep"] == '1' else False)
+                                     keep_only_last=(args_main["keep"] == '1'),
+                                     reasoning=(args_main["reasoning"] == '1'))
     START = datetime.now()
     print(f"Process started at {START}")
     framework(end_node=args_main["end_node"])
