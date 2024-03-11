@@ -49,7 +49,7 @@ class SPARQLQuery:
             if name in params and params[name]:
                 query = query.replace(
                     f"<VALUES-unique-{name}>",
-                    "VALUES ?" + abbr + " { <" + quote_plus(params[name], safe='/:') + "> } "
+                    "VALUES ?" + abbr + " { <" + quote_plus(params[name], safe='/:#') + "> } "
                 )
             else:
                 query = query.replace(f"<VALUES-unique-{name}>", "")
