@@ -102,7 +102,7 @@ class FrameSemanticsNGBuilder:
                 # Here add part about DBpedia Spotlight
                 curr_ent = [val for k, val in surf_to_ent.items() if k in fr_el.text]
                 for ent in curr_ent:
-                    graph.add((fe_iri, NS_SKOS["related"], URIRef(ent)))
+                    graph.add((fe_iri, NS_SKOS["related"], URIRef(quote(ent, safe=":/"))))
 
                 type_role = NS_NIF["Word"] if len(fr_el.text.split(" ")) == 1 else NS_NIF["Phrase"]
                 graph.add((fe_iri, NS_RDF["type"], type_role))

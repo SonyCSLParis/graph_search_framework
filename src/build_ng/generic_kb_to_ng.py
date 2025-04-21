@@ -23,6 +23,8 @@ import re
 import yaml
 import time
 import click
+from typing import Union
+from datetime import datetime
 from tqdm import tqdm
 import pandas as pd
 from rdflib import URIRef, Literal, Graph
@@ -115,6 +117,7 @@ class KGConverter:
         """ Takes output of graph search, extract events and retrieve outgoing links """
         events = list(input_df[input_df.type_df == "ingoing"].subject.unique()) + \
             list(input_df[input_df.type_df == "outgoing"].object.unique())
+        # print(events)
         
         columns = ["subject", "predicate", "object"]
         output = pd.DataFrame(columns=columns)
@@ -128,7 +131,7 @@ class KGConverter:
         return output.fillna(""), events
 
     def get_labels_iterative(self, input_df: pd.DataFrame) -> pd.DataFrame:
-        predicates = input_df.predicate.unique()
+        predicates = [x for x in input_df.predicate.unique() if x.startswith("http")]
         columns = ["predicate", "label"]
         output = pd.DataFrame(columns=columns)
         for predicate in tqdm(predicates):
@@ -149,11 +152,14 @@ class KGConverter:
         return graph, ta
 
     
-    def add_temporal(self, input_df: pd.DataFrame, graph: Graph, start_d: str, end_d: str) -> Graph:
+    def add_temporal(self, input_df: pd.DataFrame, graph: Graph, start_d: Union[str, None], end_d: Union[str, None]) -> Graph:
         """ Adding timestamps to narrative graph """
         # First starting with xsd:dateTime
         subset = input_df[input_df.object.str.contains(STR_XSD)]
         events = subset.subject.unique()
+
+        start_d = start_d if start_d else str(datetime.min)[:10]
+        end_d = end_d if end_d else str(datetime.max)[:10]
 
         for event in events:
             start_found, end_found = None, None
@@ -198,7 +204,7 @@ class KGConverter:
 
 
     def __call__(self, input_df: pd.DataFrame,
-                 start_d: str, end_d: str, add_text_extraction: bool = False) -> Graph:
+                 start_d: Union[str, None] = None, end_d: Union[str, None] = None, add_text_extraction: bool = False) -> Graph:
         """ 
         - input_df: output of graph search, {i}-subgraph.csv 
         columns: subject, predicate, object, type_df, iteration, regex_helper-
@@ -214,7 +220,7 @@ class KGConverter:
         # print("Extracting outgoing links")
         outgoing_links, events = self.get_outgoing_links(input_df=input_df)
         input_df = pd.concat([input_df[columns], outgoing_links])
-        input_df.to_csv("input.csv")
+        # input_df.to_csv("input.csv")
 
         # Adding events
         for event in events:
@@ -286,7 +292,7 @@ class KGConverter:
 @click.option("--start_d", help="start date")
 @click.option("--end_d", help="end date")
 @click.option("--save", help="save file")
-def main(input_file: str, dataset: str, start_d: str, end_d: str, save: str):
+def main(input_file: str, dataset: str, start_d: Union[str, None], end_d: Union[str, None], save: str):
     df = read_csv(path=input_file)
     converter = KGConverter(dataset=dataset)
     graph = converter(input_df=df, start_d=start_d, end_d=end_d)

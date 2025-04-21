@@ -57,30 +57,30 @@ def main(folder: str):
     exps = os.listdir(folder)
     nb_exp = len(exps)
     for i, exp in enumerate(exps):
-        # if exp == "French_Revolution":
-        graph = init_graph(prefix_to_ns=PREFIX_TO_NS)
-        perc = round(100*(i+1)/nb_exp, 1)
-        logger.info(f"({perc}%)\t[Event] {exp}")
-        curr_folder = os.path.join(folder, exp)
+        if exp == "French_Revolution":
+            graph = init_graph(prefix_to_ns=PREFIX_TO_NS)
+            perc = round(100*(i+1)/nb_exp, 1)
+            logger.info(f"({perc}%)\t[Event] {exp}")
+            curr_folder = os.path.join(folder, exp)
 
-        output_file = os.path.join(curr_folder, "frame_ng.ttl")
+            output_file = os.path.join(curr_folder, "frame_ng.ttl")
 
-        if not os.path.exists(output_file):
-            logger.info(f"[Event][{exp}] Building KG using frame semantics")
-            try:
-                events = list(read_csv(os.path.join(curr_folder, "gs_events.csv")).linkDBpediaEn.values) + [f"http://dbpedia.org/resource/{exp}"]
-                # events = events[:2]
+            if not os.path.exists(output_file):
+                logger.info(f"[Event][{exp}] Building KG using frame semantics")
+                try:
+                    events = list(read_csv(os.path.join(curr_folder, "gs_events.csv")).linkDBpediaEn.values) + [f"http://dbpedia.org/resource/{exp}"]
+                    # events = events[:2]
 
-                for event in tqdm(events):
-                    curr_graph = build_graph(event=event)
-                    graph += curr_graph
-                graph.serialize(output_file, format="ttl")
-                logger.success(f"[Done][{exp}] Built KG using frame semantics")
-            except Exception as e:
-                logger.info(f"Error: {e}")
-                logger.warning(f"Could not build graph for {event}")
-        else:
-            logger.success(f"[Done][{exp}] KG using frame semantics already built")
+                    for event in tqdm(events):
+                        curr_graph = build_graph(event=event)
+                        graph += curr_graph
+                    graph.serialize(output_file, format="ttl")
+                    logger.success(f"[Done][{exp}] Built KG using frame semantics")
+                except Exception as e:
+                    logger.info(f"Error: {e}")
+                    logger.warning(f"Could not build graph for {event}")
+            else:
+                logger.success(f"[Done][{exp}] KG using frame semantics already built")
 
 
 if __name__ == '__main__':
