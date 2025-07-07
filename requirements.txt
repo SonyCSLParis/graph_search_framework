@@ -10,7 +10,7 @@ coverage==6.2
 plotly==5.4.0
 tqdm==4.62.3
 pydeps==1.10.12
-ray==1.10.0
+ray==2.43.0
 pybind11==2.9.1
 hdt==2.3
 wandb==0.12.15
